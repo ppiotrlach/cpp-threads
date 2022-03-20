@@ -13,10 +13,10 @@ using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
 using std::chrono::system_clock;
 //-----------------
 
-const int BOARD_WIDTH = 1 * 21;
+const int BOARD_WIDTH = 0.5 * 21;
 const char EMPTY_PLACE = '.';
 const char BG_CHAR = ' ';
-const int VELOCITY_FACTOR = 3;
+const int VELOCITY_FACTOR = 1;
 const float VELOCITY_MULTIPLIER = 0.05 * VELOCITY_FACTOR;
 
 const int CARS_NR2 = 4;
@@ -46,6 +46,10 @@ public:
         this->id = id;
         this->velocity = 1000000 / (velocity * VELOCITY_MULTIPLIER);
         this->board = matrix;
+    }
+    ~Car()
+    {
+        delete this;
     }
 
     void drive()
@@ -143,7 +147,7 @@ public:
 
                 for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) //go right
                 {
-                    while (board[i][0] != EMPTY_PLACE) //&& i < RIGHT_CORNER
+                    while (board[i][0] != EMPTY_PLACE)
                     {
                         usleep(velocity);
                     }
@@ -395,8 +399,6 @@ int main()
 
 
     
-
-
     t_printer.join();
     t_c1.join();
     t_c2.join();
@@ -412,65 +414,6 @@ int main()
     t_cd.join();
     t_ce.join();
 
-    // thread t_spawner(spawn_cars_road2, matrix);
-
-    // Car *c4 = new Car('Z', 400, matrix);
-    // thread t_c4(&Car::drive2, c4);
-
-    // Car *c5 = new Car('X', 100, matrix);
-    // thread t_c5(&Car::drive2, c5);
-
-    // Car *c6 = new Car('C', 90, matrix);
-    // thread t_c6(&Car::drive2, c6);
-
-    // for (int i = 0; i < 2; i++)
-    // {
-    //     Car *temp_car = new Car('1' + i, CONST_VELOCITY, matrix);
-    //     thread t_temp(&Car::drive, temp_car);
-
-    //     // usleep(10000);
-    //     t_temp.join();
-    // }
-
-    
-
-
-
-    // t_spawner.join();
-
-    // std::vector<std::thread> t_vector;
-
-    // for(int i  = 0; i < 5; i++)
-    // {
-    //     c++;
-    //     if (c > 90)
-    //         c = 65;
-
-    //     random_v = rand() % 150 + 50;
-
-    //     Car *temp_car = new Car(c, random_v, matrix);
-    //     t_vector.emplace_back(&Car::drive2, temp_car); // Pass by reference here, make sure the object lifetime is correct
-    //      //     sleep(3);
-    // }
-    // for(auto& t: t_vector)
-    // {
-    //     t.join();
-    // }
-
-    // while (true)
-    // {
-    //     c++;
-    //     if (c > 90)
-    //         c = 65;
-
-    //     random_v = rand() % 150 + 50;
-
-    //     Car *temp_car = new Car(c, random_v, matrix);
-    //     thread t_temp(&Car::drive2, temp_car);
-
-    //     t_temp.join();
-    //     sleep(3);
-    // }
 
     return 0;
 }
