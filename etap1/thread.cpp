@@ -24,12 +24,13 @@ const int CONST_VELOCITY = 500;
 
 const int LAPS_NUMBER = 3;
 
+bool do_work = true;
+
 // const int RIGHT_CORNER = BOARD_WIDTH * 2 / 3 + 1;
 // const int LEFT_CORNER = RIGHT_CORNER / 2;
 
 const int RIGHT_CORNER = BOARD_WIDTH * 3 / 4;
 const int LEFT_CORNER = BOARD_WIDTH / 4;
-
 
 void print_roads();
 void print_board(char *matrix[BOARD_WIDTH]);
@@ -57,15 +58,28 @@ public:
         bool is_after_first_turn = false;
         int random_road = rand() % 4 + 1;
 
-        usleep((rand() % 100 + 1) * 1000);
+        int rand_time =  rand() % 10000 + 1;
 
-        while (true)
+        for (int t = 0; t < rand_time; t++)
+        {
+            if (!do_work)
+            {
+                cout << ". ";
+                return;
+            }
+            usleep(100);
+        }
+        usleep((rand() % 10000 + 1) * 1000);
+
+        while (do_work)
         {
             if (is_after_first_turn || random_road == 1)
             {
                 is_after_first_turn = true;
                 for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) //go right
                 {
+                    if (!do_work)
+                        break;
                     while (board[0][i] != EMPTY_PLACE) //&& i < RIGHT_CORNER
                     {
                         usleep(velocity);
@@ -85,6 +99,8 @@ public:
                 is_after_first_turn = true;
                 for (int i = 1; i < BOARD_WIDTH; i++) // go down
                 {
+                    if (!do_work)
+                        break;
                     while (board[i][RIGHT_CORNER] != EMPTY_PLACE)
                         usleep(velocity);
 
@@ -102,6 +118,8 @@ public:
                 is_after_first_turn = true;
                 for (int i = RIGHT_CORNER - 1; i >= LEFT_CORNER; i--) // go left
                 {
+                    if (!do_work)
+                        break;
                     while (board[BOARD_WIDTH - 1][i] != EMPTY_PLACE)
                     {
                         usleep(velocity);
@@ -121,6 +139,8 @@ public:
                 is_after_first_turn = true;
                 for (int i = BOARD_WIDTH - 1 - 1; i >= 0; i--) // go up
                 {
+                    if (!do_work)
+                        break;
                     while (board[i][LEFT_CORNER] != EMPTY_PLACE)
                     {
                         usleep(velocity);
@@ -136,17 +156,23 @@ public:
                 }
             }
         }
+        cout << ". ";
+        return;
     }
 
     void drive2()
     {
-        while (true)
+        while (do_work)
         {
             for (int x = 0; x < LAPS_NUMBER; x++)
             {
+                if (!do_work)
+                    break;
 
                 for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) //go right
                 {
+                    if (!do_work)
+                        break;
                     while (board[i][0] != EMPTY_PLACE)
                     {
                         usleep(velocity);
@@ -163,6 +189,8 @@ public:
 
                 for (int i = 1; i < BOARD_WIDTH; i++) // go down
                 {
+                    if (!do_work)
+                        break;
                     while (board[RIGHT_CORNER][i] != EMPTY_PLACE)
                         usleep(velocity);
 
@@ -177,6 +205,8 @@ public:
 
                 for (int i = RIGHT_CORNER - 1; i >= LEFT_CORNER; i--) // go left
                 {
+                    if (!do_work)
+                        break;
                     while (board[i][BOARD_WIDTH - 1] != EMPTY_PLACE)
                     {
                         usleep(velocity);
@@ -193,6 +223,8 @@ public:
 
                 for (int i = BOARD_WIDTH - 1 - 1; i >= 0; i--) // go up
                 {
+                    if (!do_work)
+                        break;
                     while (board[LEFT_CORNER][i] != EMPTY_PLACE)
                     {
                         usleep(velocity);
@@ -215,14 +247,14 @@ public:
             this->id = c;
             this->velocity = 1000000 / (random_v * VELOCITY_MULTIPLIER);
         }
-
+        cout << ". ";
         return;
     }
 };
 
 void print_board(char *matrix[BOARD_WIDTH])
 {
-    while (true)
+    while (do_work)
     {
         system("clear");
         for (int i = 0; i < BOARD_WIDTH; i++)
@@ -237,26 +269,26 @@ void print_board(char *matrix[BOARD_WIDTH])
     }
 }
 
-void spawn_cars_road2(char *matrix[BOARD_WIDTH])
-{
-    int c = 65; //90
-    int random_v;
+// void spawn_cars_road2(char *matrix[BOARD_WIDTH])
+// {
+//     int c = 65; //90
+//     int random_v;
 
-    while (true)
-    {
-        c++;
-        if (c > 90)
-            c = 65;
+//     while (true)
+//     {
+//         c++;
+//         if (c > 90)
+//             c = 65;
 
-        random_v = rand() % 150 + 50;
-        // sleep(random_v/200);
+//         random_v = rand() % 150 + 50;
+//         // sleep(random_v/200);
 
-        Car *temp_car = new Car(c, random_v, matrix);
-        thread t_temp(&Car::drive2, temp_car);
+//         Car *temp_car = new Car(c, random_v, matrix);
+//         thread t_temp(&Car::drive2, temp_car);
 
-        t_temp.join();
-    }
-}
+//         t_temp.join();
+//     }
+// }
 
 void print_board_curses(char *matrix[BOARD_WIDTH])
 {
@@ -264,8 +296,7 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
 
     initscr();
     // start_color();
-    // init_pair(1, COLOR_GREEN, COLOR_BLACK); //background
-    // init_pair(1, COLOR_CYAN, COLOR_BLUE); //background
+    // init_pair(1, COLOR_GREEN, COLOR_BLACK); //backgroundprint_board_curses
     // init_pair(2, COLOR_RED, COLOR_BLACK); //roads
     // init_pair(3, COLOR_GREEN, COLOR_BLACK); //cars
 
@@ -285,7 +316,7 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
 
     // attron(COLOR_PAIR(2));
     //roads, cars
-    while (true)
+    while (do_work)
     {
         for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) //go right
         {
@@ -312,20 +343,18 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
             mvprintw(i, LEFT_CORNER * WIDTH_MULTIPLIER, "%c", matrix[i][LEFT_CORNER]);
             mvprintw(LEFT_CORNER, i * WIDTH_MULTIPLIER, "%c", matrix[LEFT_CORNER][i]);
         }
-        getch();
-        // usleep(300000);
-        // sleep(1);
+        refresh();
     }
     // attroff(COLOR_PAIR(1));
-
     endwin();
+    return;
 }
 
 void ncurses_print()
 {
     initscr();
 
-    while (true)
+    while (do_work)
     {
 
         for (int k = 20; k < 120; k++)
@@ -338,12 +367,22 @@ void ncurses_print()
                 {
                     mvprintw(j, i, "%c", k); // =     move(0,0);     printw("%d", c);
                 }
-                getch();
+                refresh();
             }
         }
     }
-    getch();
     endwin();
+    return;
+}
+
+void wait_for_esc()
+{
+    while (do_work)
+    {
+        if (cin.get() == 27)
+            do_work = false;
+    }
+    return;
 }
 
 int main()
@@ -365,7 +404,6 @@ int main()
     }
 
     thread t_printer(print_board_curses, matrix);
-    
 
     Car *c1 = new Car('1', 80, matrix);
     thread t_c1(&Car::drive, c1);
@@ -382,23 +420,24 @@ int main()
     Car *c5 = new Car('5', 80, matrix);
     thread t_c5(&Car::drive, c5);
 
-    Car *ca = new Car('A', 100, matrix);
+    Car *ca = new Car('A', 130, matrix);
     thread t_ca(&Car::drive2, ca);
 
-    Car *cb = new Car('B', 90, matrix);
+    Car *cb = new Car('B', 120, matrix);
     thread t_cb(&Car::drive2, cb);
 
-    Car *cc = new Car('C', 70, matrix);
+    Car *cc = new Car('C', 90, matrix);
     thread t_cc(&Car::drive2, cc);
 
     Car *cd = new Car('D', 80, matrix);
     thread t_cd(&Car::drive2, cd);
 
-    Car *ce = new Car('E', 80, matrix);
+    Car *ce = new Car('E', 100, matrix);
     thread t_ce(&Car::drive2, ce);
 
+    thread t_escape(wait_for_esc);
 
-    
+    t_escape.join();
     t_printer.join();
     t_c1.join();
     t_c2.join();
@@ -406,14 +445,18 @@ int main()
     t_c4.join();
     t_c5.join();
 
-        
-
     t_ca.join();
     t_cb.join();
     t_cc.join();
     t_cd.join();
     t_ce.join();
 
+    while (do_work)
+    {
+    }
+
+    delete matrix;
+    matrix = nullptr;
 
     return 0;
 }
