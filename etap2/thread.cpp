@@ -14,11 +14,13 @@ using std::chrono::system_clock;
 //-----------------
 
 const int FPS = 30;
-const int BOARD_WIDTH = 21;
+const int BOARD_WIDTH = 21/2;
 const char EMPTY_PLACE = '.';
 const char BG_CHAR = ' ';
 const int VELOCITY_FACTOR = 1;
 const float VELOCITY_MULTIPLIER = 0.05 * VELOCITY_FACTOR;
+
+const float TRAFFIC_LIGHTS_TIME = 1.0;
 
 const int CARS_NR1 = 10;
 const int CARS_NR2 = 10;
@@ -195,8 +197,28 @@ public:
                         break;
                     while (board[RIGHT_CORNER][i] != EMPTY_PLACE)
                         usleep(velocity);
+                    
+
+                    if (i == LEFT_CORNER)
+                    {
+                        while (board[RIGHT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
+                        {
+                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                        }
+                    }
+
+                    if (i == RIGHT_CORNER)
+                    {
+                        while (board[RIGHT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
+                        {
+                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                        }
+                    }
+
 
                     board[RIGHT_CORNER][i] = this->id;
+
+                    
 
                     if (i > 0 && board[RIGHT_CORNER][i - 1] == this->id)
                     {
@@ -232,7 +254,27 @@ public:
                         usleep(velocity);
                     }
 
+
+                    if (i == LEFT_CORNER)
+                    {
+                        while (board[LEFT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
+                        {
+                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                        }
+                    }
+
+                    if (i == RIGHT_CORNER)
+                    {
+                        while (board[LEFT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
+                        {
+                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                        }
+                    }
+
+
                     board[LEFT_CORNER][i] = this->id;
+
+                    
 
                     if (i < BOARD_WIDTH - 1 && board[LEFT_CORNER][i + 1] == this->id)
                     {
@@ -348,12 +390,14 @@ void car2_manager(char *matrix[BOARD_WIDTH])
     while (do_work)
     {
         int rand_time = rand() % 25 + 1;
-        for(int i = 0; i < rand_time; i++){
-            if(!do_work) break;
+        for (int i = 0; i < rand_time; i++)
+        {
+            if (!do_work)
+                break;
             sleep(1);
-            
         }
-        if(!do_work) break;
+        if (!do_work)
+            break;
 
         Car *temp_car = new Car(rand() % 25 + 65, rand() % 80 + 50, matrix);
         thread t_car(&Car::drive2, temp_car);
