@@ -317,7 +317,11 @@ void print_board(char *matrix[BOARD_WIDTH])
 
 void print_board_curses(char *matrix[BOARD_WIDTH])
 {
+
+
     const int WIDTH_MULTIPLIER = 3;
+
+    curs_set(0);
 
     // start_color();
     // init_pair(1, COLOR_GREEN, COLOR_BLACK); //backgroundprint_board_curses
