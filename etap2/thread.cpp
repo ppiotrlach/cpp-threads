@@ -14,7 +14,7 @@ using std::chrono::system_clock;
 //-----------------
 
 const int FPS = 30;
-const int BOARD_WIDTH = 21/2;
+const int BOARD_WIDTH = 21;
 const char EMPTY_PLACE = '.';
 const char BG_CHAR = ' ';
 const int VELOCITY_FACTOR = 1;
