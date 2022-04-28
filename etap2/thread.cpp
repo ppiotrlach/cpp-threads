@@ -12,7 +12,7 @@ using namespace std::literals::chrono_literals;
 using namespace std::this_thread;     // sleep_for, sleep_until
 using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
 using std::chrono::system_clock;
-//-----------------
+
 
 const int FPS = 30;
 const int BOARD_WIDTH = 21;
