@@ -5,6 +5,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <stdlib.h>
+#include <mutex>
 
 using namespace std;
 using namespace std::literals::chrono_literals;
@@ -20,7 +21,7 @@ const char BG_CHAR = ' ';
 const int VELOCITY_FACTOR = 1;
 const float VELOCITY_MULTIPLIER = 0.05 * VELOCITY_FACTOR;
 
-const float TRAFFIC_LIGHTS_TIME = 1.0;
+const float YIELD_PRIORITY_TIME = 1.0;
 
 const int CARS_NR1 = 10;
 const int CARS_NR2 = 10;
@@ -29,6 +30,8 @@ const int LAPS_NUMBER = 1;
 
 bool car_finished_road = false;
 bool do_work = true;
+
+mutex m1, m2, m3, m4;
 
 // const int RIGHT_CORNER = BOARD_WIDTH * 2 / 3 + 1;
 // const int LEFT_CORNER = RIGHT_CORNER / 2;
@@ -173,7 +176,7 @@ public:
                 if (!do_work)
                     break;
 
-                for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) // go right
+                for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) // go down
                 {
                     if (!do_work)
                         break;
@@ -191,7 +194,7 @@ public:
                     usleep(velocity);
                 }
 
-                for (int i = 1; i < BOARD_WIDTH; i++) // go down
+                for (int i = 1; i < BOARD_WIDTH; i++) // go right
                 {
                     if (!do_work)
                         break;
@@ -201,18 +204,22 @@ public:
 
                     if (i == LEFT_CORNER)
                     {
+                        m1.lock();
                         while (board[RIGHT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
                         {
-                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                            usleep(1000000 * YIELD_PRIORITY_TIME);
                         }
+                        m1.unlock();
                     }
 
                     if (i == RIGHT_CORNER)
                     {
+                        m2.lock();
                         while (board[RIGHT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
                         {
-                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                            usleep(1000000 * YIELD_PRIORITY_TIME);
                         }
+                        m2.unlock();
                     }
 
 
@@ -227,7 +234,7 @@ public:
                     usleep(velocity);
                 }
 
-                for (int i = RIGHT_CORNER - 1; i >= LEFT_CORNER; i--) // go left
+                for (int i = RIGHT_CORNER - 1; i >= LEFT_CORNER; i--) // go up
                 {
                     if (!do_work)
                         break;
@@ -245,7 +252,7 @@ public:
                     usleep(velocity);
                 }
 
-                for (int i = BOARD_WIDTH - 1 - 1; i >= 0; i--) // go up
+                for (int i = BOARD_WIDTH - 1 - 1; i >= 0; i--) // go left
                 {
                     if (!do_work)
                         break;
@@ -257,18 +264,22 @@ public:
 
                     if (i == LEFT_CORNER)
                     {
+                        m3.lock();
                         while (board[LEFT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
                         {
-                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                            usleep(1000000 * YIELD_PRIORITY_TIME);
                         }
+                        m3.unlock();
                     }
 
                     if (i == RIGHT_CORNER)
                     {
+                        m4.lock();
                         while (board[LEFT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
                         {
-                            usleep(1000000 * TRAFFIC_LIGHTS_TIME);
+                            usleep(1000000 * YIELD_PRIORITY_TIME);
                         }
+                        m4.unlock();
                     }
 
 
