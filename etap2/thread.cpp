@@ -1,3 +1,19 @@
+/*
+etap1 - dwa tory, po ktorych poruszaja sie pojazdy:
+    --tor1---
+    |       |
+----|-tor2-------
+|   |       |   |
+|   |       |   |
+|   |       |   |
+----|-----------
+    |       |
+    ---------
+     - 1 tor - stała liczba pojazdów poruszających się z tą samą predkością
+     - 2 tor - pojazdy z losowym opóźnieniem wjeżdząją na  tor z losową predkością i zjeżdząją po 3 okrążeniach
+etap 2 - pojazdy z toru pierwszego mają pierwszeństwo nad pojazdami z toru drugiego
+*/
+
 #include <iostream>
 #include <thread>
 #include <vector>
@@ -6,13 +22,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <mutex>
+#include <condition_variable>
 
 using namespace std;
 using namespace std::literals::chrono_literals;
 using namespace std::this_thread;     // sleep_for, sleep_until
 using namespace std::chrono_literals; // ns, us, ms, s, h, etc.
 using std::chrono::system_clock;
-
 
 const int FPS = 30;
 const int BOARD_WIDTH = 21;
@@ -21,23 +37,29 @@ const char BG_CHAR = ' ';
 const int VELOCITY_FACTOR = 1;
 const float VELOCITY_MULTIPLIER = 0.05 * VELOCITY_FACTOR;
 
-const float YIELD_PRIORITY_TIME = 1.0;
-
 const int CARS_NR1 = 10;
 const int CARS_NR2 = 10;
 
-const int LAPS_NUMBER = 1;
+const int LAPS_NUMBER = 3;
+
+const int RIGHT_CORNER = BOARD_WIDTH * 3 / 4;
+const int LEFT_CORNER = BOARD_WIDTH / 4;
 
 bool car_finished_road = false;
 bool do_work = true;
 
-mutex m1, m2, m3, m4;
+condition_variable up_left_CV, up_right_CV, down_left_CV, down_right_CV;
+mutex up_left_mutex, up_right_mutex, down_left_mutex, down_right_mutex;
+
+bool is_up_left_crossroad_busy = false;
+bool is_up_right_crossroad_busy = false;
+bool is_down_left_crossroad_busy = false;
+bool is_down_right_crossroad_busy = false;
 
 // const int RIGHT_CORNER = BOARD_WIDTH * 2 / 3 + 1;
 // const int LEFT_CORNER = RIGHT_CORNER / 2;
 
-const int RIGHT_CORNER = BOARD_WIDTH * 3 / 4;
-const int LEFT_CORNER = BOARD_WIDTH / 4;
+
 
 void print_roads();
 void print_board(char *matrix[BOARD_WIDTH]);
@@ -80,11 +102,13 @@ public:
 
         while (do_work)
         {
+
             if (is_after_first_turn || random_road == 1)
             {
                 is_after_first_turn = true;
                 for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) // go right
                 {
+
                     if (!do_work)
                         break;
                     while (board[0][i] != EMPTY_PLACE) //&& i < RIGHT_CORNER
@@ -103,6 +127,7 @@ public:
             }
             if (is_after_first_turn || random_road == 2)
             {
+
                 is_after_first_turn = true;
                 for (int i = 1; i < BOARD_WIDTH; i++) // go down
                 {
@@ -113,6 +138,30 @@ public:
 
                     board[i][RIGHT_CORNER] = this->id;
 
+                    // RIGHT UP CROSSROAD
+                    if (board[LEFT_CORNER - 1][RIGHT_CORNER] == this->id || board[LEFT_CORNER][RIGHT_CORNER] == this->id || board[LEFT_CORNER + 1][RIGHT_CORNER] == this->id)
+                    {
+                        lock_guard<mutex> lg(up_right_mutex);
+                        is_up_right_crossroad_busy = true;
+                    }
+                    else if (board[LEFT_CORNER - 1][RIGHT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER][RIGHT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER + 1][RIGHT_CORNER] == EMPTY_PLACE)
+                    {
+                        is_up_right_crossroad_busy = false;
+                        up_right_CV.notify_all();
+                    }
+
+                    // RIGHT DOWN CROSSROAD
+                    if (board[RIGHT_CORNER - 1][RIGHT_CORNER] == this->id || board[RIGHT_CORNER][RIGHT_CORNER] == this->id || board[RIGHT_CORNER + 1][RIGHT_CORNER] == this->id)
+                    {
+                        lock_guard<mutex> lg(down_right_mutex);
+                        is_down_right_crossroad_busy = true;
+                    }
+                    else if (board[RIGHT_CORNER - 1][RIGHT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER][RIGHT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER + 1][RIGHT_CORNER] == EMPTY_PLACE)
+                    {
+                        is_down_right_crossroad_busy = false;
+                        down_right_CV.notify_all();
+                    }
+
                     if (i > 0 && board[i - 1][RIGHT_CORNER] == this->id)
                     {
                         board[i - 1][RIGHT_CORNER] = EMPTY_PLACE;
@@ -122,6 +171,7 @@ public:
             }
             if (is_after_first_turn || random_road == 3)
             {
+
                 is_after_first_turn = true;
                 for (int i = RIGHT_CORNER - 1; i >= LEFT_CORNER; i--) // go left
                 {
@@ -143,6 +193,7 @@ public:
             }
             if (is_after_first_turn || random_road == 3)
             {
+
                 is_after_first_turn = true;
                 for (int i = BOARD_WIDTH - 1 - 1; i >= 0; i--) // go up
                 {
@@ -154,6 +205,30 @@ public:
                     }
 
                     board[i][LEFT_CORNER] = this->id;
+
+                    // LEFT UP CROSSROAD
+                    if (board[LEFT_CORNER - 1][LEFT_CORNER] == this->id || board[LEFT_CORNER][LEFT_CORNER] == this->id || board[LEFT_CORNER + 1][LEFT_CORNER] == this->id)
+                    {
+                        lock_guard<mutex> lg(up_left_mutex);
+                        is_up_left_crossroad_busy = true;
+                    }
+                    else if (board[LEFT_CORNER - 1][LEFT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER][LEFT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER + 1][LEFT_CORNER] == EMPTY_PLACE)
+                    {
+                        is_up_left_crossroad_busy = false;
+                        up_left_CV.notify_all();
+                    }
+
+                    // LEFT DOWN CROSSROAD
+                    if (board[RIGHT_CORNER - 1][LEFT_CORNER] == this->id || board[RIGHT_CORNER][LEFT_CORNER] == this->id || board[RIGHT_CORNER + 1][LEFT_CORNER] == this->id)
+                    {
+                        lock_guard<mutex> lg(down_left_mutex);
+                        is_down_left_crossroad_busy = true;
+                    }
+                    else if (board[RIGHT_CORNER - 1][LEFT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER][LEFT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER + 1][LEFT_CORNER] == EMPTY_PLACE)
+                    {
+                        is_down_left_crossroad_busy = false;
+                        down_left_CV.notify_all();
+                    }
 
                     if (i < BOARD_WIDTH - 1 && board[i + 1][LEFT_CORNER] == this->id)
                     {
@@ -200,32 +275,21 @@ public:
                         break;
                     while (board[RIGHT_CORNER][i] != EMPTY_PLACE)
                         usleep(velocity);
-                    
 
                     if (i == LEFT_CORNER)
                     {
-                        m1.lock();
-                        while (board[RIGHT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
-                        {
-                            usleep(1000000 * YIELD_PRIORITY_TIME);
-                        }
-                        m1.unlock();
+                        unique_lock<mutex> ul(down_left_mutex);
+                        down_left_CV.wait(ul, []
+                                          { return (!is_down_left_crossroad_busy || !do_work); });
                     }
-
-                    if (i == RIGHT_CORNER)
+                    else if (i == RIGHT_CORNER)
                     {
-                        m2.lock();
-                        while (board[RIGHT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[RIGHT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
-                        {
-                            usleep(1000000 * YIELD_PRIORITY_TIME);
-                        }
-                        m2.unlock();
+                        unique_lock<mutex> ul(down_right_mutex);
+                        down_right_CV.wait(ul, []
+                                           { return (!is_down_right_crossroad_busy || !do_work); });
                     }
-
 
                     board[RIGHT_CORNER][i] = this->id;
-
-                    
 
                     if (i > 0 && board[RIGHT_CORNER][i - 1] == this->id)
                     {
@@ -261,31 +325,20 @@ public:
                         usleep(velocity);
                     }
 
-
-                    if (i == LEFT_CORNER)
-                    {
-                        m3.lock();
-                        while (board[LEFT_CORNER - 1][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][LEFT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][LEFT_CORNER] != EMPTY_PLACE)
-                        {
-                            usleep(1000000 * YIELD_PRIORITY_TIME);
-                        }
-                        m3.unlock();
-                    }
-
                     if (i == RIGHT_CORNER)
                     {
-                        m4.lock();
-                        while (board[LEFT_CORNER - 1][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER][RIGHT_CORNER] != EMPTY_PLACE || board[LEFT_CORNER + 1][RIGHT_CORNER] != EMPTY_PLACE)
-                        {
-                            usleep(1000000 * YIELD_PRIORITY_TIME);
-                        }
-                        m4.unlock();
+                        unique_lock<mutex> ul(up_right_mutex);
+                        up_right_CV.wait(ul, []
+                                         { return (!is_up_right_crossroad_busy || !do_work); });
+                    }
+                    else if (i == LEFT_CORNER)
+                    {
+                        unique_lock<mutex> ul(up_left_mutex);
+                        up_left_CV.wait(ul, []
+                                        { return (!is_up_left_crossroad_busy || !do_work); });
                     }
 
-
                     board[LEFT_CORNER][i] = this->id;
-
-                    
 
                     if (i < BOARD_WIDTH - 1 && board[LEFT_CORNER][i + 1] == this->id)
                     {
@@ -329,7 +382,6 @@ void print_board(char *matrix[BOARD_WIDTH])
 void print_board_curses(char *matrix[BOARD_WIDTH])
 {
 
-
     const int WIDTH_MULTIPLIER = 3;
 
     curs_set(0);
@@ -357,6 +409,15 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
     // roads, cars
     while (do_work)
     {
+        // if (is_up_right_crossroad_busy)
+        // {
+        //     mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", 'X'); // =     move(0,0);     printw("%d", c);
+        // }
+        // else
+        // {
+        //     mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", '|'); // =     move(0,0);     printw("%d", c);
+        // }
+
         for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) // go right
         {
             mvprintw(0, i * WIDTH_MULTIPLIER, "%c", matrix[0][i]); // =     move(0,0);     printw("%d", c);
@@ -383,7 +444,7 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
             mvprintw(LEFT_CORNER, i * WIDTH_MULTIPLIER, "%c", matrix[LEFT_CORNER][i]);
         }
         refresh();
-        usleep(1000000 / FPS);
+        // usleep(1000000 / FPS);
     }
     // attroff(COLOR_PAIR(1));
 
