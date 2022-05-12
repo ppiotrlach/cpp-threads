@@ -12,6 +12,8 @@ etap1 - dwa tory, po ktorych poruszaja sie pojazdy:
      - 1 tor - stała liczba pojazdów poruszających się z tą samą predkością
      - 2 tor - pojazdy z losowym opóźnieniem wjeżdząją na  tor z losową predkością i zjeżdząją po 3 okrążeniach
 etap 2 - pojazdy z toru pierwszego mają pierwszeństwo nad pojazdami z toru drugiego
+
+g++ thread.cpp -o thread -std=c++14 -pthread -lncurses
 */
 
 #include <iostream>
