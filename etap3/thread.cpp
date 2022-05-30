@@ -13,6 +13,21 @@ etap1 - dwa tory, po ktorych poruszaja sie pojazdy:
      - 2 tor - pojazdy z losowym opóźnieniem wjeżdząją na  tor z losową predkością i zjeżdząją po 3 okrążeniach
 etap 2 - pojazdy z toru pierwszego mają pierwszeństwo nad pojazdami z toru drugiego
 
+etap 3:
+
+    --tor1---
+    |       |
+----|-tor2---ABC-
+|   |       |   |
+|   |       |   |
+|   |       |   |
+----|-----FED----
+    |       |
+    ---------
+
+W momencie gdy przed prawym górnym skrzyżowaniem będą czekały już 3 pojazdy żaden inny pojazd z drogi 
+podporządkowanej nie może przejechać prawego dolnego skrzyżowania
+
 g++ thread.cpp -o thread -std=c++14 -pthread -lncurses
 */
 
