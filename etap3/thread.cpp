@@ -21,11 +21,11 @@ etap 3:
 |   |       |   |
 |   |       |   |
 |   |       |   |
-----|-----FED----
+----|----FED-----
     |       |
     ---------
 
-W momencie gdy przed prawym górnym skrzyżowaniem będą czekały już 3 pojazdy żaden inny pojazd z drogi 
+W momencie gdy przed prawym górnym skrzyżowaniem będą czekały 3 pojazdy żaden inny pojazd z drogi 
 podporządkowanej nie może przejechać prawego dolnego skrzyżowania
 
 g++ thread.cpp -o thread -std=c++14 -pthread -lncurses
@@ -158,11 +158,12 @@ public:
                     // RIGHT UP CROSSROAD
                     if (board[LEFT_CORNER - 1][RIGHT_CORNER] == this->id || board[LEFT_CORNER][RIGHT_CORNER] == this->id || board[LEFT_CORNER + 1][RIGHT_CORNER] == this->id)
                     {
-                        lock_guard<mutex> lg(up_right_mutex);
+                        unique_lock<mutex> lg(up_right_mutex);
                         is_up_right_crossroad_busy = true;
                     }
                     else if (board[LEFT_CORNER - 1][RIGHT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER][RIGHT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER + 1][RIGHT_CORNER] == EMPTY_PLACE)
                     {
+                        unique_lock<mutex> lg(up_right_mutex);
                         is_up_right_crossroad_busy = false;
                         up_right_CV.notify_all();
                     }
@@ -170,11 +171,12 @@ public:
                     // RIGHT DOWN CROSSROAD
                     if (board[RIGHT_CORNER - 1][RIGHT_CORNER] == this->id || board[RIGHT_CORNER][RIGHT_CORNER] == this->id || board[RIGHT_CORNER + 1][RIGHT_CORNER] == this->id)
                     {
-                        lock_guard<mutex> lg(down_right_mutex);
+                        unique_lock<mutex> lg(down_right_mutex);
                         is_down_right_crossroad_busy = true;
                     }
                     else if (board[RIGHT_CORNER - 1][RIGHT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER][RIGHT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER + 1][RIGHT_CORNER] == EMPTY_PLACE)
                     {
+                        unique_lock<mutex> lg(down_right_mutex);
                         is_down_right_crossroad_busy = false;
                         down_right_CV.notify_all();
                     }
@@ -226,11 +228,12 @@ public:
                     // LEFT UP CROSSROAD
                     if (board[LEFT_CORNER - 1][LEFT_CORNER] == this->id || board[LEFT_CORNER][LEFT_CORNER] == this->id || board[LEFT_CORNER + 1][LEFT_CORNER] == this->id)
                     {
-                        lock_guard<mutex> lg(up_left_mutex);
+                        unique_lock<mutex> lg(up_left_mutex);
                         is_up_left_crossroad_busy = true;
                     }
                     else if (board[LEFT_CORNER - 1][LEFT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER][LEFT_CORNER] == EMPTY_PLACE && board[LEFT_CORNER + 1][LEFT_CORNER] == EMPTY_PLACE)
                     {
+                        unique_lock<mutex> lg(up_left_mutex);
                         is_up_left_crossroad_busy = false;
                         up_left_CV.notify_all();
                     }
@@ -238,11 +241,12 @@ public:
                     // LEFT DOWN CROSSROAD
                     if (board[RIGHT_CORNER - 1][LEFT_CORNER] == this->id || board[RIGHT_CORNER][LEFT_CORNER] == this->id || board[RIGHT_CORNER + 1][LEFT_CORNER] == this->id)
                     {
-                        lock_guard<mutex> lg(down_left_mutex);
+                        unique_lock<mutex> lg(down_left_mutex);
                         is_down_left_crossroad_busy = true;
                     }
                     else if (board[RIGHT_CORNER - 1][LEFT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER][LEFT_CORNER] == EMPTY_PLACE && board[RIGHT_CORNER + 1][LEFT_CORNER] == EMPTY_PLACE)
                     {
+                        unique_lock<mutex> lg(down_left_mutex);
                         is_down_left_crossroad_busy = false;
                         down_left_CV.notify_all();
                     }
