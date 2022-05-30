@@ -25,7 +25,7 @@ etap 3:
     |       |
     ---------
 
-W momencie gdy przed prawym górnym skrzyżowaniem będą czekały 3 pojazdy żaden inny pojazd z drogi 
+W momencie gdy przed prawym górnym skrzyżowaniem będą czekały 3 pojazdy żaden inny pojazd z drogi
 podporządkowanej nie może przejechać prawego dolnego skrzyżowania
 
 g++ thread.cpp -o thread -std=c++14 -pthread -lncurses
@@ -55,7 +55,7 @@ const int VELOCITY_FACTOR = 1;
 const float VELOCITY_MULTIPLIER = 0.05 * VELOCITY_FACTOR;
 
 const int CARS_NR1 = 10;
-const int CARS_NR2 = 10;
+const int CARS_NR2 = 20;
 
 const int LAPS_NUMBER = 3;
 
@@ -66,17 +66,14 @@ bool car_finished_road = false;
 bool do_work = true;
 
 condition_variable up_left_CV, up_right_CV, down_left_CV, down_right_CV;
+condition_variable traffic_jam_CV;
 mutex up_left_mutex, up_right_mutex, down_left_mutex, down_right_mutex;
+mutex traffic_jam_mutex;
 
-bool is_up_left_crossroad_busy = false;
-bool is_up_right_crossroad_busy = false;
-bool is_down_left_crossroad_busy = false;
-bool is_down_right_crossroad_busy = false;
-
+bool is_up_left_crossroad_busy, is_up_right_crossroad_busy, is_down_left_crossroad_busy, is_down_right_crossroad_busy;
+bool is_traffic_jam_before_up_right_crossroad;
 // const int RIGHT_CORNER = BOARD_WIDTH * 2 / 3 + 1;
 // const int LEFT_CORNER = RIGHT_CORNER / 2;
-
-
 
 void print_roads();
 void print_board(char *matrix[BOARD_WIDTH]);
@@ -305,11 +302,15 @@ public:
                     }
                     else if (i == RIGHT_CORNER)
                     {
-                        unique_lock<mutex> ul(down_right_mutex);
-                        down_right_CV.wait(ul, []
+                        unique_lock<mutex> ul2(traffic_jam_mutex);
+                        traffic_jam_CV.wait(ul2, []
+                                            { return (!is_traffic_jam_before_up_right_crossroad || !do_work); });
+
+                        unique_lock<mutex> ul1(down_right_mutex);
+                        ul2.swap(ul1);
+                        down_right_CV.wait(ul2, []
                                            { return (!is_down_right_crossroad_busy || !do_work); });
                     }
-
                     board[RIGHT_CORNER][i] = this->id;
 
                     if (i > 0 && board[RIGHT_CORNER][i - 1] == this->id)
@@ -348,6 +349,19 @@ public:
 
                     if (i == RIGHT_CORNER)
                     {
+                        if (board[LEFT_CORNER][i + 1] != EMPTY_PLACE && board[LEFT_CORNER][i + 2] != EMPTY_PLACE)
+                        //  && board[LEFT_CORNER][i + 3] != EMPTY_PLACE
+                        {
+                            unique_lock<mutex> lg(traffic_jam_mutex);
+                            is_traffic_jam_before_up_right_crossroad = true;
+                        }
+                        else
+                        {
+                            unique_lock<mutex> lg(traffic_jam_mutex);
+                            is_traffic_jam_before_up_right_crossroad = false;
+                            traffic_jam_CV.notify_one();
+                        }
+
                         unique_lock<mutex> ul(up_right_mutex);
                         up_right_CV.wait(ul, []
                                          { return (!is_up_right_crossroad_busy || !do_work); });
@@ -358,6 +372,10 @@ public:
                         up_left_CV.wait(ul, []
                                         { return (!is_up_left_crossroad_busy || !do_work); });
                     }
+                    // else if (i == RIGHT_CORNER + 1)
+                    // {
+
+                    // }
 
                     board[LEFT_CORNER][i] = this->id;
 
@@ -430,14 +448,14 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
     // roads, cars
     while (do_work)
     {
-        // if (is_up_right_crossroad_busy)
-        // {
-        //     mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", 'X'); // =     move(0,0);     printw("%d", c);
-        // }
-        // else
-        // {
-        //     mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", '|'); // =     move(0,0);     printw("%d", c);
-        // }
+        if (is_traffic_jam_before_up_right_crossroad)
+        {
+            mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", 'X'); // =     move(0,0);     printw("%d", c);
+        }
+        else
+        {
+            mvprintw(LEFT_CORNER - 1, RIGHT_CORNER * 3 - 1, "%c", '|'); // =     move(0,0);     printw("%d", c);
+        }
 
         for (int i = LEFT_CORNER + 1; i <= RIGHT_CORNER; i++) // go right
         {
@@ -465,7 +483,7 @@ void print_board_curses(char *matrix[BOARD_WIDTH])
             mvprintw(LEFT_CORNER, i * WIDTH_MULTIPLIER, "%c", matrix[LEFT_CORNER][i]);
         }
         refresh();
-        // usleep(1000000 / FPS);
+        usleep(1000000 / FPS);
     }
     // attroff(COLOR_PAIR(1));
 
